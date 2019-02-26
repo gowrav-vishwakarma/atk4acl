@@ -68,7 +68,9 @@ Based on your defined Super Scope Roles in config
 you will automatically get ACL Button on top of CRUD and that will manage everything for you. But to make it run you need to define your status and actions in model first.
 
 ![enter image description here](docs/1-acl.png)
+
 ![enter image description here](docs/2-how-acl.png)
+
 ![enter image description here](docs/3-acl-on-role.png)
 
 
