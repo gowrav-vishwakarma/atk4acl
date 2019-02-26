@@ -97,6 +97,19 @@ How to code for those actions. For view, edit and delete you don't have to code 
 			'Active'=>['view','edit','delete','deactivate'],
 			'InActive'=>['view','edit','delete','activate'],
 		]
+		
+		function init(){
+			parent::init();
+			...
+			$this->addFields([
+        	['name'],
+        	['username'],
+        	['password'],
+            ['joined_on','type'=>'date'],
+            ['status','enum'=>array_keys($this->actions)], <== Here is your staus field
+        ]);
+			...
+		}
 		...
 		function deactivate(){
 			$this['status']='InActive';
