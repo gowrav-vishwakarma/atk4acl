@@ -27,7 +27,7 @@ class Acl extends \nebula\we\Controller {
 		
 		// Actual Acl between role and acl_type
 		$this->role = $this->app->auth->model[$this->auth_model_role_field];
-		$this->acl_type = $this->model->acl_type?:$this->model->getModelCaption();
+		$this->acl_type = isset($this->model->acl_type)?$this->model->acl_type:$this->model->getModelCaption();
 
 		$acl_model_class = $this->app->getConfig('acl/AclModelClass','\atk4\acl\Model\Acl');
 		$this->acl_model = new $acl_model_class($this->app->db);
