@@ -1,0 +1,16 @@
+{
+    "name": "gowrav-vishwakarma/atk4acl",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gowrav Vishwakarma",
+            "email": "gowravvishwakarma@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload":{
+        "psr-4":{"atk4\\acl\\" : "src/"}
+    }
+}
