@@ -78,12 +78,8 @@ Defining actions on status is as easy as creating one **public $actions ** class
   
 
      $actions = [
-        		'Draft'=>['view','cancle','edit','delete','submit','other_info','manage_attachments','communication'],
-        		'Submitted'=>['view','cancle','edit','delete','other_info','redesign','approve','manage_attachments','print_document','communication'],
-        		'Redesign'=>['view','edit','delete','submit','other_info','cancle','manage_attachments','communication'],
-        		'Approved'=>['view','edit','delete','redesign','paid','send','cancel','other_info','manage_attachments','print_document','communication'],
-        		'Paid'=>['view','edit','delete','send','cancel','other_info','manage_attachments','print_document','communication'],
-        		'Canceled'=>['view','edit','delete','paid','redraft','other_info','manage_attachments','communication']
+        		'Active'=>['view','edit','delete','deactivate','superpass'],
+        		'InActive'=>['view','edit','delete','activate'],
         		];
 
 Out of these 'view', 'edit' and 'delete' are taken care automatically with options **SelfOnly** , **All**, **None**
