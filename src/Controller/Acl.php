@@ -2,7 +2,7 @@
 
 namespace atk4\acl\Controller;
 
-class Acl extends \nebula\we\Controller {
+class Acl extends \atk4\acl\Controller {
 	
 	public $model; // To put condition on model
 	public $role; // Based on which post auth model user belongs to 
