@@ -19,7 +19,7 @@ class AclActionDecorator extends \atk4\ui\TableColumn\Generic {
 
 	public function init(){
 		parent::init();
-		$thisname = $this->name;
+		$thisname = 'atk4acl_key';
 		$this->table=$this->acl_controller->view;
 
 
