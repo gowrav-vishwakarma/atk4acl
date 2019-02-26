@@ -14,32 +14,6 @@ class AclEditDelete extends \atk4\ui\TableColumn\Actions {
 		$this->status_actions = $status_actions;
 	}
 
-	public function addAction($button, $callback, $confirm = false)
-    {
-
-    	$action_params=[];
-    	if(isset($_REQUEST[$this->acl_controller->name])){
-	    	$model_id = $_REQUEST[$this->acl_controller->name];
-	    	$action = $_REQUEST[$this->acl_controller->name.'_act'];
-	    	$action_params[$this->acl_controller->name] = $model_id;
-	    	$action_params[$this->acl_controller->name.'_act'] = $action;
-    	}
-
-        $name = $this->name.'_action_'.(count($this->actions) + 1);
-
-        if (!is_object($button)) {
-            $button = new \atk4\ui\Button($button);
-        }
-        $button->app = $this->table->app;
-
-        $this->actions[$name] = $button;
-        $button->addClass('b_'.$name);
-        $button->addClass('compact');
-        $this->table->on('click', '.b_'.$name, $callback, array_merge($action_params,[$this->table->jsRow()->data('id'), 'confirm' => $confirm]));
-
-        return $button;
-    }
-
 	public function getDataCellTemplate(\atk4\data\Field $f = null)
     {
         return '{$actions}';
