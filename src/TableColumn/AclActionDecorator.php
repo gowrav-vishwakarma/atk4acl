@@ -75,7 +75,7 @@ class AclActionDecorator extends \atk4\ui\TableColumn\Generic {
 
 	public function getHtmlTags	($row, $field)
     {
-    	$status_actions = $this->status_actions[$field->get()];
+    	$status_actions = $this->status_actions[$field->get()?:'All'];
 
     	$dropdown_string =	'<div class="ui compact menu">
     							<div class="ui simple dropdown item">'.$field->get().'<i class="dropdown icon"></i>

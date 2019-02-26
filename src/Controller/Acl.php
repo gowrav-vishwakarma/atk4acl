@@ -9,7 +9,7 @@ class Acl extends \nebula\we\Controller {
 	public $view; // add acl button for super user and create actions based on ACL
 
 	public $acl_type=null;
-	public $available_options=['SelfOnly','All','None'];
+	public $available_options=['All','None'];
 	public $auth_model_role_field='role_id'; // Can be post_id or anything if Acl is applied in Department->Post->Employee System
 
 	public $acl_model_class = '\atk4\acl\Model\Acl';
@@ -37,6 +37,7 @@ class Acl extends \nebula\we\Controller {
 		$this->acl_model->tryLoadAny();
 
 
+		if($this->model->hasField($this->app->getConfig('acl/created_by_field','created_by_id'))) $this->available_options = array_merge($this->available_options,['SelfOnly']);
 		if(isset($this->model->assigned_field)) $this->available_options = array_merge($this->available_options,['Assigned To Self']);
 
 		$this->model_vp1 = $modal_vp1 = $this->app->add(['Modal', 'title' => 'Role Selection']);
@@ -108,7 +109,12 @@ class Acl extends \nebula\we\Controller {
 		// currently managed for Table, GRID and ACL/ But planned to work on any custom view also
 		
 		if(($this->view instanceof \atk4\ui\Table) || ($this->view instanceof \atk4\ui\Grid)){
-			$this->view->addDecorator('status',$this->view->add(new \atk4\acl\TableColumn\AclActionDecorator($this->status_actions, $this)));
+			$status_field = $this->app->getConfig('acl/status_field','status');
+			if($this->model->hasField($status_field))
+				$this->view->addDecorator($status_field,$this->view->add(new \atk4\acl\TableColumn\AclActionDecorator($this->status_actions, $this)));
+			else{
+				$this->view->addColumn($status_field,$this->view->add(new \atk4\acl\TableColumn\AclActionDecorator($this->status_actions, $this)));				
+			}
 			$this->view->canCreate = $this->acl_model['can_add'];
 		}
 	}
@@ -175,8 +181,9 @@ class Acl extends \nebula\we\Controller {
 			$this->action_allowed_raw = json_decode($this->acl_model['acl'],true);
 		}
 
+		if(!isset($this->model->actions)) $this->model->actions = ['All'=>['view','edit','delete']];
 		foreach ($this->model->actions as $status => $actions) {
-			if($status=='*') $status='all';
+			if($status=='*' || $status=='') $status='All';
 			foreach ($actions as $action) {
 				$acl_value = isset($this->action_allowed[$status][$action])?$this->action_allowed[$status][$action]:$this->permissive_acl;
 				$this->action_allowed[$status][$action] = ($this->isSuperUser() && $this->app->getConfig('all_rights_to_superuser',true))?true:$this->textToCode($acl_value);
