@@ -5,5 +5,6 @@ $config['acl']=[
 	'UserModel' =>'\your\namespace\Model\Employee',
 	'SuperUserRoles'=>['SuperUser'],
 	'created_by_field'=>'created_by_id',
-	'status_field'=>'status'
+	'status_field'=>'status',
+	'assigned_field'=>'assigned_to_id'
 ];

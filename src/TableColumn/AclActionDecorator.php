@@ -75,22 +75,24 @@ class AclActionDecorator extends \atk4\ui\TableColumn\Generic {
 
 	public function getHtmlTags	($row, $field)
     {
-    	$status_actions = $this->status_actions[$field->get()?:'All'];
-
+        $status=$field->get()?:0;
+    	$status_actions = $this->status_actions[$status];
     	$dropdown_string =	'<div class="ui compact menu">
     							<div class="ui simple dropdown item">'.$field->get().'<i class="dropdown icon"></i>
     								<div class="menu">';
 		
-		foreach ($status_actions as $act => $type) {
-			if(in_array($act, ['view','edit','delete'])) continue;
+		foreach ($status_actions as $act => $detail) {
+			if($detail[0] == 'None' || ($detail['display'] !=='page' && $detail['display'] !== 'method')) continue;
+            if(($detail[0] == 'SelfOnly' || $this->acl_controller->isAssignField($status,$act)) && $row[$this->acl_controller->getConditionalField($status,$act)] != $this->acl_controller->app->auth->model->id) continue; 
 
 			$act_title = ucwords(str_replace('_', ' ', $act));
-			$dropdown_string .= 		'<div class="item acl-action '. $type .'" data-id="'.$row['id'].'" data-action="'.$act.'">'.$act_title.'</div>';
+			$dropdown_string .= 		'<div class="item acl-action '. $detail['display'] .'" data-id="'.$row['id'].'" data-action="'.$act.'">'.$act_title.'</div>';
 		}
 
 		$dropdown_string .='		</div>
 								</div>
 							</div>';
+
         
         return [$field->short_name => $dropdown_string];
     }

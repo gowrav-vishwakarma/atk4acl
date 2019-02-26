@@ -27,7 +27,7 @@ class Acl extends \atk4\data\Model {
             ['acl','type'=>'text']
         ]);
 
-        (new \atk4\schema\Migration\MySQL($this))->migrate();
+        // (new \atk4\schema\Migration\MySQL($this))->migrate();
 
     }
 }

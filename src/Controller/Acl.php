@@ -13,10 +13,11 @@ class Acl extends \atk4\acl\Controller {
 	public $auth_model_role_field='role_id'; // Can be post_id or anything if Acl is applied in Department->Post->Employee System
 
 	public $acl_model_class = '\atk4\acl\Model\Acl';
+	public $status_field = 'status';
 
 	public $action_allowed=null; // Final Array determines action allowed
 	public $status_actions=[]; // Final Array determines action allowed on each status
-	public $permissive_acl = false;
+	public $permissive_acl = 'All';
 
 
 	function init(){
@@ -29,8 +30,10 @@ class Acl extends \atk4\acl\Controller {
 		$this->role = $this->app->auth->model[$this->auth_model_role_field];
 		$this->acl_type = isset($this->model->acl_type)?$this->model->acl_type:$this->model->getModelCaption();
 
-		$acl_model_class = $this->app->getConfig('acl/AclModelClass','\atk4\acl\Model\Acl');
-		$this->acl_model = new $acl_model_class($this->app->db);
+		$this->status_field = $this->app->getConfig('acl/status_field','status');
+
+		$this->acl_model_class = $this->app->getConfig('acl/AclModelClass','\atk4\acl\Model\Acl');
+		$this->acl_model = new $this->acl_model_class($this->app->db);
 		
 		$this->acl_model->addCondition('acl_type',$this->acl_type);
 		$this->acl_model->addCondition('role_id',$this->role);
@@ -62,36 +65,53 @@ class Acl extends \atk4\acl\Controller {
 	}
 
 	protected function applyConditionOnModel(){
-
-		$view_array = $this->canView();
-		$model = $this->model;
-
 		$a=[];
-		foreach ($view_array as $status => $acl) { // acl can be true(for all, false for none and [] for employee created_by_ids)
+		$status_included =[];
+		$where_condition =[];
 
-			if($status=='All' || $status=='*'){
-				if($acl === true) break;
-				if($acl === false) $acl = -1; // Shuold never be reached
-				$model->addCondition($this->getConditionalField($status,'view'),$acl);
-				break;
+		foreach ($this->status_actions as $status => $acl) { // acl can be true(for all, false for none and [] for employee created_by_ids)
+			$acl = $acl['view'];
+			$display = $acl['display'];
+			$acl = $acl[0];
+
+			if($status===0){
+				// No status in model, just actions, so focus on view condition without status specific
+				if($acl === 'All') break; // No Conditions to put
+				if($acl === 'None') 
+					$acl = -1; // put some un matchable condition on appropirate field
+				elseif($acl === 'SelfOnly')
+					$acl = $this->app->auth->model->id;
+
+				$this->model->addCondition($this->getConditionalField($status,'view'),$acl);
+				break; // Must not be further set present like $actions=[['view','delete'],['c','d']], Without status C/D has no value
 			}else{
-				if($acl==="All") continue;
-				if($acl === false){
-					// $where_condition[] = "(false)";
+				// We have various status based actions defined
+
+				if($acl === "All") {
+					$status_included=[$status];
+					$where_condition[] = "([status] = '$status')";
 					continue;
 				}
-				if($acl === true){
-					// No employee condition .. just check status
-					$where_condition[] = "([status] = \"$status\")";
-				}else{
-					$where_condition[] = "( ([".strtolower($status)."] in (". implode(",", $acl) .")) AND ([status] = \"$status\") )";
+				if($acl === 'None'){
+					// $where_condition[] = "([status] <> '$status')";
+					continue;
+				}
+				if($acl === "SelfOnly" || $acl === "Assigned To Self"){
+					$status_included=[$status];
+					$where_condition[] = "( ([".strtolower($status)."] in (". $this->app->auth->model->id .")) AND ([status] = \"$status\") )";
 				}
 			}
 		}
+
+		// BUG-Solution : If all status view is set NONE, ALL SHOWS ;)
+		if(empty($status_included)) {
+			$where_condition[] = "(false)";
+		}
+
 		if(!empty($where_condition)){
 			$q= $this->model->dsql();
 			
-			$filler_values=['status'=>$this->model->getElement('status')];
+			$filler_values=['status'=>$this->model->getElement($this->status_field)];
 			foreach ($this->action_allowed as $status => $actions) {
 				$filler_values[strtolower($status)]=$this->model->getElement($this->getConditionalField($status,'view'));
 			}
@@ -102,6 +122,7 @@ class Acl extends \atk4\acl\Controller {
 					)
 				)
 			;
+
 		}
 	}
 
@@ -154,7 +175,7 @@ class Acl extends \atk4\acl\Controller {
 			foreach ($actions as $act) {
 				$grp->add(['View'])->set($act);
 				$grp->addField($status.'_'.$act,['DropDown'],['enum'=>$this->available_options])
-					->set(isset($acl_array[$status][$act])?$acl_array[$status][$act]:$this->permissive_acl?"All":"None");
+					->set(isset($acl_array[$status][$act])?$acl_array[$status][$act]:($this->permissive_acl?"All":"None"));
 			}
 		}
 
@@ -176,22 +197,20 @@ class Acl extends \atk4\acl\Controller {
 	}
 
 	protected function canDo(){
-		if($this->action_allowed===null){
-			$this->action_allowed = json_decode($this->acl_model['acl'],true);
-			$this->action_allowed_raw = json_decode($this->acl_model['acl'],true);
-		}
+		$this->action_allowed_raw = json_decode($this->acl_model['acl'],true);
+		
+		$saved_action_allowed = json_decode($this->acl_model['acl'],true);
 
-		if(!isset($this->model->actions)) $this->model->actions = ['All'=>['view','edit','delete']];
+		if(!isset($this->model->actions)) $this->model->actions = [['view','edit','delete']];
 		foreach ($this->model->actions as $status => $actions) {
-			if($status=='*' || $status=='') $status='All';
 			foreach ($actions as $action) {
-				$acl_value = isset($this->action_allowed[$status][$action])?$this->action_allowed[$status][$action]:$this->permissive_acl;
-				$this->action_allowed[$status][$action] = ($this->isSuperUser() && $this->app->getConfig('all_rights_to_superuser',true))?true:$this->textToCode($acl_value);
+				$acl_value = isset($saved_action_allowed[$status][$action])?$saved_action_allowed[$status][$action]:$this->permissive_acl;
+				$this->action_allowed[$status][$action] = ($this->isSuperUser() && $this->app->getConfig('all_rights_to_superuser',true))?'All':$acl_value;
 			}
 		}
 	}
 
-	protected function isSuperUser(){
+	public function isSuperUser(){
 		return in_array(
 			$this->app->auth->model[str_replace("_id", '', $this->auth_model_role_field)],
 			$this->app->getConfig('acl/SuperUserRoles',['SuperUser','SuperAdmin'])
@@ -199,46 +218,22 @@ class Acl extends \atk4\acl\Controller {
 	}
 
 	protected function set_status_actions(){
-		foreach ($this->action_allowed as $status => $values) {
+		foreach ($this->action_allowed as $status => $actions) {
 			$this->status_actions[$status]=[];
-			foreach ($values as $value => $permission) {
-				if(
-					$permission === true || 
-					(
-						is_array($permission) && in_array($this->auth->model->id, $permission)
-					)
-				){
-						$this->status_actions[$status][$value] = $this->model->hasMethod('page_'.$value)?'page':'method';
-					}
+			foreach ($actions as $act => $permission) {
+				$display = (in_array($act,['view','edit','delete']))? false : ($this->model->hasMethod('page_'.$act)?'page':'method');
+				$this->status_actions[$status][$act] = [$permission, 'display'=>$display];
 			}
 		}
 	}
 
-	protected function canView(){
-		$view_array=[];
-
-		foreach ($this->action_allowed as $status => $actions) {
-			$view_array[$status] = isset($actions['view'])?$actions['view']:false;
-		}
-
-		return $view_array;
+	public function getConditionalField($status,$action){
+		if(!$this->isAssignField($status, $action)) return 'created_by_id';
+		return isset($this->model->assigned_field)? $this->model->assigned_field: $this->app->getConfig('acl/assigned_field','assigned_to_id');
 	}
 
-	protected function getConditionalField($status,$action){
-		if($this->action_allowed_raw[$status][$action] != 'Assigned To') return 'created_by_id';
-		return isset($this->model->assigned_field)? $this->model->assigned_field: 'assigned_to_id';
-
-	}
-
-	function textToCode($text){
-		$text = strtolower($text);
-
-		if($text ==='' || $text === null) return $this->permissive_acl;
-		if($text === 'none') return false;
-		if($text === 'all' || $text === true ) return true;
-		if($text === 'selfonly' || $text === 'self only') return [$this->app->auth->model->id];
-		if(strpos($text, "assign") !== false) return [$this->app->auth->model->id];
-		return $text;
+	public function isAssignField($status,$action){
+		return (strpos(strtolower($this->action_allowed[$status][$action][0]), 'assign') !== false);
 	}
 
 	function getModel(){
