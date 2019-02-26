@@ -67,6 +67,11 @@ Based on your defined Super Scope Roles in config
 
 you will automatically get ACL Button on top of CRUD and that will manage everything for you. But to make it run you need to define your status and actions in model first.
 
+![enter image description here](docs/1-acl.png)
+![enter image description here](docs/2-how-acl.png)
+![enter image description here](docs/3-acl-on-role.png)
+
+
 Defining actions on status is as easy as creating one **public $actions ** class variable in your models. like this
   
 
@@ -108,6 +113,8 @@ How to code for those actions. For view, edit and delete you don't have to code 
 			$this->save();
 		}
     }
+
+![enter image description here](docs/4-how-actions-visible.png)
 
 And fun doesn't stops here, sometime you need some user input to perform some actions like creating a form and do somthing on its submit.
 Well, just define one more action in any/all status and create function name with prefix **'page_'** ex.
