@@ -148,7 +148,7 @@ class Acl extends \nebula\we\Controller {
 			foreach ($actions as $act) {
 				$grp->add(['View'])->set($act);
 				$grp->addField($status.'_'.$act,['DropDown'],['enum'=>$this->available_options])
-					->set($acl_array[$status][$act]);
+					->set(isset($acl_array[$status][$act])?$acl_array[$status][$act]:$this->permissive_acl?"All":"None");
 			}
 		}
 
