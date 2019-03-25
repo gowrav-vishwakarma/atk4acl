@@ -10,9 +10,10 @@ class Acl extends \atk4\acl\Controller {
 
 	public $acl_type=null;
 	public $available_options=['All','None'];
-	public $auth_model_role_field='role_id'; // Can be post_id or anything if Acl is applied in Department->Post->Employee System
+	public $auth_model_role_field=null; // Can be post_id or anything if Acl is applied in Department->Post->Employee System
 
-	public $acl_model_class = '\atk4\acl\Model\Acl';
+	public $acl_model_class = null;
+	public $role_class = null;
 	public $status_field = 'status';
 
 	public $action_allowed=null; // Final Array determines action allowed
@@ -23,6 +24,9 @@ class Acl extends \atk4\acl\Controller {
 	function init(){
 		parent::init();
 
+		$this->auth_model_role_field = $this->app->getConfig('acl/model_role_field','role_id');
+		$this->role_class = $this->app->getConfig('acl/role_class','\atk4\acl\Model\Role');
+
 		$this->model = $this->getModel();
 		$this->view = $this->getView();
 		
@@ -32,7 +36,7 @@ class Acl extends \atk4\acl\Controller {
 
 		$this->status_field = $this->app->getConfig('acl/status_field','status');
 
-		$this->acl_model_class = $this->app->getConfig('acl/AclModelClass','\atk4\acl\Model\Acl');
+		$this->acl_model_class = $this->app->getConfig('acl/model_class','\atk4\acl\Model\Acl');
 		$this->acl_model = new $this->acl_model_class($this->app->db);
 		
 		$this->acl_model->addCondition('acl_type',$this->acl_type);
@@ -143,13 +147,13 @@ class Acl extends \atk4\acl\Controller {
 	protected function manageAclPage($p){
 		$form = $p->add('Form',['buttonSave'=>['Button','update','primary']]);
 		$g = $form->addGroup(['width' => 'two']);
-
+		$role_class_obj = new $this->role_class($this->app->db);
 		$g->addField('role', [
 		    'Lookup',
-		    'model'       => new \atk4\acl\Model\Role($this->app->db),
+		    'model'       => $role_class_obj,
 		    'hint'        => 'Lookup field is just like AutoComplete, supports all the same options.',
 		    'placeholder' => 'Search for roles',
-		    'search'      => ['name'],
+		    'search'      => [$role_class_obj->title_field],
 		]);
 		$g->addField('entity',['disabled'=>true])->set($this->acl_type);
 
