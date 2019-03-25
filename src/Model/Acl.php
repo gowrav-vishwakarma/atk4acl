@@ -18,6 +18,7 @@ class Acl extends \atk4\data\Model {
 	public function init(){
         parent::init();
 
+        // You can override and change class but field name should be role_id
         $this->hasOne('role_id',new \atk4\acl\Model\Role)
         ->withTitle();
 
