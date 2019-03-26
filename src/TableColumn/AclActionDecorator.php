@@ -27,12 +27,12 @@ class AclActionDecorator extends \atk4\ui\TableColumn\Generic {
         $this->method_callback->set(function ()use($thisname) {
         	$model_id = $_REQUEST[$thisname];
         	$action = $_REQUEST[$thisname.'_act'];
-
+            if(!$action) return;
         	if($this->acl_controller->model->hasMethod($action)){
         		$this->acl_controller->model->load($model_id);
         		$this->acl_controller->model->{$action}();
         	}else{
-        		throw new \atk4\ui\Exception(['Method not deifined','class'=>get_class($this->acl_controller->model), 'method'=>$action ]);
+        		throw new \atk4\ui\Exception(['Method not deifined '.$action.' in '.get_class($this->acl_controller->model),'class'=>get_class($this->acl_controller->model), 'method'=>$action ]);
         	}
 
             $reload = $this->table->reload ?: $this->table;
