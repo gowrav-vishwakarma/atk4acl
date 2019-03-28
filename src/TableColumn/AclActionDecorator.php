@@ -46,6 +46,8 @@ class AclActionDecorator extends \atk4\ui\TableColumn\Generic {
         	$model_id = $_REQUEST[$thisname];
         	$action = $_REQUEST[$thisname.'_act'];
 
+            if(!$action) return;
+
         	$this->acl_controller->app->addURLArgs($thisname, $model_id);
         	$this->acl_controller->app->addURLArgs($thisname.'_act', $action);
 
@@ -56,7 +58,7 @@ class AclActionDecorator extends \atk4\ui\TableColumn\Generic {
 	        	$page_return = $this->acl_controller->model->{'page_'.$action}($page);
 	        	// TODO manage Page Return automatically
 	        }else{
-        		throw new \atk4\ui\Exception(['Method not deifined','class'=>get_class($this->acl_controller->model), 'method'=>$action ]);
+        		throw new \atk4\ui\Exception(['Method '.$action.' not deifined in '.get_class($this->acl_controller->model),'class'=>get_class($this->acl_controller->model), 'method'=>$action ]);
 	        }
         });
 
