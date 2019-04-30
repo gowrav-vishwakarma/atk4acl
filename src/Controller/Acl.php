@@ -1,8 +1,12 @@
 <?php
 
 namespace atk4\acl\Controller;
+use atk4\core\DIContainerTrait;
+
 
 class Acl extends \atk4\acl\Controller {
+
+	use DIContainerTrait;
 	
 	public $model; // To put condition on model
 	public $role; // Based on which post auth model user belongs to 
@@ -27,7 +31,9 @@ class Acl extends \atk4\acl\Controller {
 	function init(){
 		parent::init();
 
-		if(!$this->auth_model) $this->auth_model = $this->app->auth->model;
+		if(!$this->auth_model) {
+			$this->auth_model = $this->app->auth->model;
+		}
 		if(!$this->db) $this->db = $this->app->db;
 
 		$this->auth_model_role_field = $this->app->getConfig('acl/model_role_field','role_id');
@@ -35,7 +41,6 @@ class Acl extends \atk4\acl\Controller {
 
 		$this->model = $this->getModel();
 		$this->view = $this->getView();
-		
 		// Actual Acl between role and acl_type
 		$this->role = $this->auth_model[$this->auth_model_role_field];
 		$this->acl_type = isset($this->model->acl_type)?$this->model->acl_type:$this->model->getModelCaption();
@@ -141,8 +146,9 @@ class Acl extends \atk4\acl\Controller {
 		
 		if(($this->view instanceof \atk4\ui\Table) || ($this->view instanceof \atk4\ui\Grid)){
 			$status_field = $this->app->getConfig('acl/status_field','status');
-			if($this->model->hasField($status_field))
+			if($this->model->hasField($status_field)){
 				$this->view->addDecorator($status_field,$this->view->add(new \atk4\acl\TableColumn\AclActionDecorator($this->status_actions, $this)));
+			}
 			else{
 				$this->view->addColumn($status_field,$this->view->add(new \atk4\acl\TableColumn\AclActionDecorator($this->status_actions, $this)));				
 			}
@@ -215,7 +221,7 @@ class Acl extends \atk4\acl\Controller {
 		foreach ($this->model->actions as $status => $actions) {
 			foreach ($actions as $action) {
 				$acl_value = isset($saved_action_allowed[$status][$action])?$saved_action_allowed[$status][$action]:$this->permissive_acl;
-				$this->action_allowed[$status][$action] = ($this->isSuperUser() && $this->app->getConfig('all_rights_to_superuser',true))?'All':$acl_value;
+				$this->action_allowed[$status][$action] = ($this->isSuperUser() && $this->app->getConfig('acl/all_rights_to_superuser','true')=='true')?'All':$acl_value;
 			}
 		}
 	}

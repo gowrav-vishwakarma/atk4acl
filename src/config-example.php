@@ -8,5 +8,6 @@ $config['acl']=[
 	'SuperUserRoles'=>['SuperUser'],
 	'created_by_field'=>'created_by_id',
 	'status_field'=>'status',
-	'assigned_field'=>'assigned_to_id'
+	'assigned_field'=>'assigned_to_id',
+	'all_rights_to_superuser'=>'false' // string false
 ];

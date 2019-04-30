@@ -8,6 +8,8 @@ class CRUD extends \atk4\ui\CRUD {
 
     protected $actionDecorator = '\atk4\acl\TableColumn\AclEditDelete';
     protected $acl_controller = null;
+    public $auth_model = null;
+    public $db = null;
 
 	public function setModel(\atk4\data\Model $m, $defaultFields = null)
     {
@@ -18,7 +20,7 @@ class CRUD extends \atk4\ui\CRUD {
         \atk4\ui\Grid::setModel($m, $this->fieldsRead ?: $this->fieldsDefault);
         $this->model->unload();
 
-        $this->acl_controller = $this->add('\atk4\acl\Controller\Acl');
+        $this->acl_controller = $this->add(['\atk4\acl\Controller\Acl','auth_model'=>$this->auth_model,'db'=>$this->db]);
 
         if ($this->canCreate) {
             $this->initCreate();
