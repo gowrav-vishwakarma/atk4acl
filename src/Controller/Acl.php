@@ -10,6 +10,7 @@ class Acl extends \atk4\acl\Controller {
 
 	public $acl_type=null;
 	public $available_options=['All','None'];
+	public $auth_model=null; // Can be post_id or anything if Acl is applied in Department->Post->Employee System
 	public $auth_model_role_field=null; // Can be post_id or anything if Acl is applied in Department->Post->Employee System
 
 	public $acl_model_class = null;
@@ -20,9 +21,14 @@ class Acl extends \atk4\acl\Controller {
 	public $status_actions=[]; // Final Array determines action allowed on each status
 	public $permissive_acl = 'All';
 
+	public $db=null;
+
 
 	function init(){
 		parent::init();
+
+		if(!$this->auth_model) $this->auth_model = $this->app->auth->model;
+		if(!$this->db) $this->db = $this->app->db;
 
 		$this->auth_model_role_field = $this->app->getConfig('acl/model_role_field','role_id');
 		$this->role_class = $this->app->getConfig('acl/role_class','\atk4\acl\Model\Role');
@@ -31,13 +37,13 @@ class Acl extends \atk4\acl\Controller {
 		$this->view = $this->getView();
 		
 		// Actual Acl between role and acl_type
-		$this->role = $this->app->auth->model[$this->auth_model_role_field];
+		$this->role = $this->auth_model[$this->auth_model_role_field];
 		$this->acl_type = isset($this->model->acl_type)?$this->model->acl_type:$this->model->getModelCaption();
 
 		$this->status_field = $this->app->getConfig('acl/status_field','status');
 
 		$this->acl_model_class = $this->app->getConfig('acl/model_class','\atk4\acl\Model\Acl');
-		$this->acl_model = new $this->acl_model_class($this->app->db);
+		$this->acl_model = new $this->acl_model_class($this->db);
 		
 		$this->acl_model->addCondition('acl_type',$this->acl_type);
 		$this->acl_model->addCondition('role_id',$this->role);
@@ -84,7 +90,7 @@ class Acl extends \atk4\acl\Controller {
 				if($acl === 'None') 
 					$acl = -1; // put some un matchable condition on appropirate field
 				elseif($acl === 'SelfOnly')
-					$acl = $this->app->auth->model->id;
+					$acl = $this->auth_model->id;
 
 				$this->model->addCondition($this->getConditionalField($status,'view'),$acl);
 				break; // Must not be further set present like $actions=[['view','delete'],['c','d']], Without status C/D has no value
@@ -102,7 +108,7 @@ class Acl extends \atk4\acl\Controller {
 				}
 				if($acl === "SelfOnly" || $acl === "Assigned To Self"){
 					$status_included=[$status];
-					$where_condition[] = "( ([".strtolower($status)."] in (". $this->app->auth->model->id .")) AND ([status] = \"$status\") )";
+					$where_condition[] = "( ([".strtolower($status)."] in (". $this->auth_model->id .")) AND ([status] = \"$status\") )";
 				}
 			}
 		}
@@ -147,7 +153,7 @@ class Acl extends \atk4\acl\Controller {
 	protected function manageAclPage($p){
 		$form = $p->add('Form',['buttonSave'=>['Button','update','primary']]);
 		$g = $form->addGroup(['width' => 'two']);
-		$role_class_obj = new $this->role_class($this->app->db);
+		$role_class_obj = new $this->role_class($this->db);
 		$g->addField('role', [
 		    'Lookup',
 		    'model'       => $role_class_obj,
@@ -165,7 +171,7 @@ class Acl extends \atk4\acl\Controller {
 	protected function manageAclForm($p){
 		
 		// Load Existing acl_model for given role/and type
-		$acl_m = new \atk4\acl\Model\Acl($this->app->db);
+		$acl_m = new \atk4\acl\Model\Acl($this->db);
 		$acl_m->addCondition('acl_type',$this->acl_type);
 		$acl_m->addCondition('role_id',$this->app->stickyGet('role'));
 		$acl_m->tryLoadAny();
@@ -216,7 +222,7 @@ class Acl extends \atk4\acl\Controller {
 
 	public function isSuperUser(){
 		return in_array(
-			$this->app->auth->model[str_replace("_id", '', $this->auth_model_role_field)],
+			$this->auth_model[str_replace("_id", '', $this->auth_model_role_field)],
 			$this->app->getConfig('acl/SuperUserRoles',['SuperUser','SuperAdmin'])
 		);
 	}
