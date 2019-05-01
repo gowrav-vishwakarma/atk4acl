@@ -21,7 +21,10 @@ class CRUD extends \atk4\ui\CRUD {
         $this->model->unload();
 
         $this->acl_controller = $this->add(['\atk4\acl\Controller\Acl','auth_model'=>$this->auth_model,'db'=>$this->db]);
+        return $this->model;
+    }
 
+    function recursiveRender(){
         if ($this->canCreate) {
             $this->initCreate();
         }
@@ -33,8 +36,7 @@ class CRUD extends \atk4\ui\CRUD {
         if ($this->canDelete) {
             $this->initDelete();
         }
-
-        return $this->model;
+        return parent::recursiveRender();
     }
 
     public function addAction($button, $action, $confirm = false)
