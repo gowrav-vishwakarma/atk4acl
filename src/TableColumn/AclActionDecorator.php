@@ -19,7 +19,7 @@ class AclActionDecorator extends \atk4\ui\TableColumn\Generic {
 
 	public function init(){
 		parent::init();
-		$thisname = 'atk4acl_key';
+		$thisname = $this->name;
 		$this->table=$this->acl_controller->view;
 
 
@@ -42,7 +42,6 @@ class AclActionDecorator extends \atk4\ui\TableColumn\Generic {
 
         $this->page_callback = $this->acl_controller->view->add('VirtualPage');
         $this->page_callback->set(function($page)use($thisname){
-        	
         	$model_id = $_REQUEST[$thisname];
         	$action = $_REQUEST[$thisname.'_act'];
 
