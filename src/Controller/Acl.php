@@ -24,6 +24,8 @@ class Acl extends \atk4\acl\Controller {
 	public $status_actions = []; // Final Array determines action allowed on each status
 	public $permissive_acl = 'All';
 
+	public $action_var = 'gvs_acl_actions';
+
 	public $db = null;
 
 	function init() {
@@ -35,6 +37,8 @@ class Acl extends \atk4\acl\Controller {
 		if (!$this->db) {
 			$this->db = $this->app->db;
 		}
+
+		$this->action_var = $this->app->getConfig('acl/actions_var', 'gvs_acl_actions');
 
 		$this->auth_model_role_field = $this->app->getConfig('acl/model_role_field', 'role_id');
 		$this->role_class = $this->app->getConfig('acl/role_class', '\atk4\acl\Model\Role');
@@ -137,9 +141,9 @@ class Acl extends \atk4\acl\Controller {
 		if (!empty($where_condition)) {
 			$q = $this->model->dsql();
 
-			$filler_values = ['status' => $this->model->getElement($this->status_field)];
+			$filler_values = ['status' => $this->model->getField($this->status_field)];
 			foreach ($this->action_allowed as $status => $actions) {
-				$filler_values[strtolower($status)] = $this->model->getElement($this->getConditionalField($status, 'view'));
+				$filler_values[strtolower($status)] = $this->model->getField($this->getConditionalField($status, 'view'));
 			}
 
 			$this->model->addCondition(
@@ -196,7 +200,7 @@ class Acl extends \atk4\acl\Controller {
 		$form = $p->add('Form');
 		$form->addField('allow_add', ['CheckBox'])->set($acl_m['can_add'] ? true : false);
 
-		foreach ($this->model->actions as $status => $actions) {
+		foreach ($this->model->{$this->action_var} as $status => $actions) {
 			$grp = $form->addGroup($status);
 			foreach ($actions as $act) {
 				$grp->add(['View'])->set($act);
@@ -207,7 +211,7 @@ class Acl extends \atk4\acl\Controller {
 
 		$form->onSubmit(function ($form) use ($acl_m) {
 			$acl_array = [];
-			foreach ($this->model->actions as $status => $actions) {
+			foreach ($this->model->{$this->action_var} as $status => $actions) {
 				$acl_array[$status] = [];
 				foreach ($actions as $act) {
 					$acl_array[$status][$act] = $form->model[$status . '_' . $act];
@@ -227,11 +231,11 @@ class Acl extends \atk4\acl\Controller {
 
 		$saved_action_allowed = json_decode($this->acl_model['acl'], true);
 
-		if (!isset($this->model->actions)) {
-			$this->model->actions = [['view', 'edit', 'delete']];
+		if (!isset($this->model->{$this->action_var})) {
+			$this->model->{$this->action_var} = [['view', 'edit', 'delete']];
 		}
 
-		foreach ($this->model->actions as $status => $actions) {
+		foreach ($this->model->{$this->action_var} as $status => $actions) {
 			foreach ($actions as $action) {
 				$acl_value = isset($saved_action_allowed[$status][$action]) ? $saved_action_allowed[$status][$action] : $this->permissive_acl;
 				$this->action_allowed[$status][$action] = ($this->isSuperUser() && $this->app->getConfig('acl/all_rights_to_superuser', 'true') == 'true') ? 'All' : $acl_value;
