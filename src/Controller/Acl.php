@@ -162,7 +162,9 @@ class Acl extends \atk4\acl\Controller {
 			} else {
 				$this->view->addColumn($status_field, $this->view->add(new \atk4\acl\TableColumn\AclActionDecorator($this->status_actions, $this)));
 			}
-			$this->view->canCreate = $this->acl_model['can_add'] === null ? ($this->permissive_acl == "All" ? true : false) : $this->acl_model['can_add'];
+			if ($this->view->canCreate) {
+				$this->view->canCreate = $this->acl_model['can_add'] === null ? ($this->permissive_acl == "All" ? true : false) : $this->acl_model['can_add'];
+			}
 		}
 	}
 
